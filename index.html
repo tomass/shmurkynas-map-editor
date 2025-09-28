@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Šmurkyno žemėlapio redaktorius</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
@@ -19,21 +20,35 @@
       <input type="number" id="height" value="10" min="1">
     </label>
 
-    <button id="generate">Kurti žemėlapį</button>
+    <button id="generate" class="icon-btn" title="Kurti žemėlapį">
+      <span class="material-icons">add_box</span>
+    </button>
 
     <div class="upload-container">
-      <button id="upload">Įkelti žemėlapį</button>
+      <button id="upload" class="icon-btn" title="Įkelti žemėlapį">
+        <span class="material-icons">file_upload</span>
+      </button>
       <input type="file" id="file-input" accept=".txt">
     </div>
 
-    <button id="download">Atsisiųsti žemėlapį</button>
+    <button id="download" class="icon-btn" title="Atsisiųsti žemėlapį">
+      <span class="material-icons">file_download</span>
+    </button>
   </div>
 
   <div class="controls">
-    <button id="add-row-top">Pridėti eilutę viršuje</button>
-    <button id="add-row-bottom">Pridėti eilutę apačioje</button>
-    <button id="add-col-left">Pridėti stulpelį kairėje</button>
-    <button id="add-col-right">Pridėti stulpelį dešinėje</button>
+    <button id="add-row-top" class="icon-btn" title="Pridėti eilutę viršuje">
+      <span class="material-icons">arrow_upward</span>
+    </button>
+    <button id="add-row-bottom" class="icon-btn" title="Pridėti eilutę apačioje">
+      <span class="material-icons">arrow_downward</span>
+    </button>
+    <button id="add-col-left" class="icon-btn" title="Pridėti stulpelį kairėje">
+      <span class="material-icons">arrow_back</span>
+    </button>
+    <button id="add-col-right" class="icon-btn" title="Pridėti stulpelį dešinėje">
+      <span class="material-icons">arrow_forward</span>
+    </button>
   </div>
 
   <div class="char-toolbar">
