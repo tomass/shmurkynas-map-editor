@@ -44,6 +44,14 @@
       margin-right: 10px;
       padding: 5px 10px;
     }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
     .upload-container {
       display: inline-block;
       margin-right: 10px;
