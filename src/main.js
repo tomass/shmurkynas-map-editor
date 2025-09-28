@@ -9,6 +9,11 @@ const uploadBtn = document.getElementById('upload');
 const fileInput = document.getElementById('file-input');
 const gridWrapper = document.getElementById('grid-wrapper');
 
+const addRowTopBtn = document.getElementById('add-row-top');
+const addRowBottomBtn = document.getElementById('add-row-bottom');
+const addColLeftBtn = document.getElementById('add-col-left');
+const addColRightBtn = document.getElementById('add-col-right');
+
 // Color mapping for characters
 const charColors = {
   'Ž': '#baf455',
@@ -147,6 +152,44 @@ charButtons.forEach(btn => {
 
 gridContainer.addEventListener('mouseup', handleCellMouseUp);
 gridContainer.addEventListener('mouseleave', handleCellMouseUp);
+
+// Function to add a row to the top
+function addRowTop() {
+  grid.unshift(Array(currentWidth).fill(''));
+  currentHeight++;
+  heightInput.value = currentHeight;
+  renderGrid();
+}
+
+// Function to add a row to the bottom
+function addRowBottom() {
+  grid.push(Array(currentWidth).fill(''));
+  currentHeight++;
+  heightInput.value = currentHeight;
+  renderGrid();
+}
+
+// Function to add a column to the left
+function addColLeft() {
+  grid.forEach(row => row.unshift(''));
+  currentWidth++;
+  widthInput.value = currentWidth;
+  renderGrid();
+}
+
+// Function to add a column to the right
+function addColRight() {
+  grid.forEach(row => row.push(''));
+  currentWidth++;
+  widthInput.value = currentWidth;
+  renderGrid();
+}
+
+// Event Listeners for new buttons
+addRowTopBtn.addEventListener('click', addRowTop);
+addRowBottomBtn.addEventListener('click', addRowBottom);
+addColLeftBtn.addEventListener('click', addColLeft);
+addColRightBtn.addEventListener('click', addColRight);
 
 // Start
 init();
