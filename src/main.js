@@ -56,7 +56,7 @@ const charColors = {
 let grid = [];
 let points = []; // Array to store transfer/living points
 let selectedChar = 'Ž';
-let selectedTool = 'select'; // 'select', 'transfer', or 'living'
+let selectedTool = 'select'; // 'select', 'transfer', 'living', or 'draw'
 let isDrawing = false;
 let selectedPoint = null;
 let currentWidth = 20;
@@ -123,7 +123,7 @@ function handleCellMouseDown(row, col) {
       : new LivingPoint(col, row);
     points.push(newPoint);
     renderGrid();
-  } else {
+  } else if (selectedTool === 'draw') {
     isDrawing = true;
     updateCell(row, col);
   }
@@ -140,7 +140,6 @@ function updateCell(row, col) {
   const cells = gridContainer.querySelectorAll('.cell');
   const index = row * currentWidth + col;
   const cellElement = cells[index];
-  cellElement.textContent = selectedChar;
   cellElement.style.backgroundColor = charColors[selectedChar] || charColors[''];
 }
 
@@ -260,9 +259,15 @@ fileInput.addEventListener('change', uploadMap);
 
 charButtons.forEach(btn => {
   btn.addEventListener('click', () => {
+    // Deselect all char buttons
     charButtons.forEach(b => b.classList.remove('selected'));
+    // Deselect all tool buttons
+    toolButtons.forEach(b => b.classList.remove('selected'));
+
+    // Select the clicked char button
     btn.classList.add('selected');
     selectedChar = btn.textContent;
+    selectedTool = 'draw'; // Set tool to 'draw'
   });
 });
 
@@ -319,9 +324,15 @@ savePropertiesBtn.addEventListener('click', () => {
 
 toolButtons.forEach(btn => {
   btn.addEventListener('click', () => {
+    // Deselect all tool buttons
     toolButtons.forEach(b => b.classList.remove('selected'));
+    // Deselect all char buttons
+    charButtons.forEach(b => b.classList.remove('selected'));
+
+    // Select the clicked tool button
     btn.classList.add('selected');
-    selectedTool = btn.id.replace('tool-', ''); // e.g., 'tool-select' -> 'select'
+    selectedTool = btn.id.replace('tool-', ''); // 'select', 'transfer', or 'living'
+    isDrawing = false; // Stop drawing when a tool is selected
   });
 });
 
