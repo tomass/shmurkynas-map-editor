@@ -54,8 +54,23 @@
     <button class="char-btn">V</button>
   </div>
 
+  <div class="points-toolbar">
+    <span>Points of Interest: </span>
+    <button id="tool-select" class="tool-btn selected">Select</button>
+    <button id="tool-transfer" class="tool-btn">Transfer</button>
+    <button id="tool-living" class="tool-btn">Living</button>
+  </div>
+
   <div id="grid-wrapper">
     <div id="grid"></div>
+  </div>
+
+  <div id="properties-sidebar" class="sidebar hidden">
+    <h3>Properties</h3>
+    <div id="properties-content">
+        <!-- Properties will be dynamically inserted here -->
+    </div>
+    <button id="save-properties">Save</button>
   </div>
 
   <script type="module" src="/src/main.js"></script>

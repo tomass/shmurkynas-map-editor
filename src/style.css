@@ -59,3 +59,35 @@
     #file-input {
       display: none;
     }
+.points-toolbar {
+  margin-top: 10px;
+}
+
+.tool-btn {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.tool-btn.selected {
+    background: #ddd;
+    font-weight: bold;
+}
+
+.sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 250px;
+  height: 100%;
+  background-color: #f9f9f9;
+  border-left: 1px solid #ccc;
+  padding: 20px;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.hidden {
+  display: none;
+}
