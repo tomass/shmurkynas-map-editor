@@ -1,3 +1,25 @@
+// Point classes
+class TransferPoint {
+  constructor(x, y) {
+    this.type = 'transfer';
+    this.x = x;
+    this.y = y;
+    this.map = '';
+  }
+}
+
+class LivingPoint {
+  constructor(x, y) {
+    this.type = 'living';
+    this.x = x;
+    this.y = y;
+    this.map = '';
+    this.owner = '';
+    this.price = 0;
+    this.maintenance = 0;
+  }
+}
+
 // DOM Elements
 const widthInput = document.getElementById('width');
 const heightInput = document.getElementById('height');
@@ -14,6 +36,12 @@ const addRowBottomBtn = document.getElementById('add-row-bottom');
 const addColLeftBtn = document.getElementById('add-col-left');
 const addColRightBtn = document.getElementById('add-col-right');
 
+// New UI elements
+const toolButtons = document.querySelectorAll('.tool-btn');
+const propertiesSidebar = document.getElementById('properties-sidebar');
+const propertiesContent = document.getElementById('properties-content');
+const savePropertiesBtn = document.getElementById('save-properties');
+
 // Color mapping for characters
 const charColors = {
   'Ž': '#baf455',
@@ -26,8 +54,11 @@ const charColors = {
 
 // State
 let grid = [];
+let points = []; // Array to store transfer/living points
 let selectedChar = 'Ž';
+let selectedTool = 'select'; // 'select', 'transfer', or 'living'
 let isDrawing = false;
+let selectedPoint = null;
 let currentWidth = 20;
 let currentHeight = 20;
 
@@ -41,6 +72,7 @@ function init() {
 // Generate empty grid
 function generateGrid() {
   grid = Array(currentHeight).fill().map(() => Array(currentWidth).fill(''));
+  points = []; // Reset points
   renderGrid();
 }
 
@@ -53,8 +85,16 @@ function renderGrid() {
     row.forEach((cell, colIdx) => {
       const cellElement = document.createElement('div');
       cellElement.className = 'cell';
-      cellElement.textContent = cell || '';
+      // cellElement.textContent = cell || ''; // Hide character
       cellElement.style.backgroundColor = charColors[cell] || charColors[''];
+
+      // Draw points
+      const point = points.find(p => p.x === colIdx && p.y === rowIdx);
+      if (point) {
+        cellElement.textContent = point.type === 'transfer' ? 'T' : 'L';
+        cellElement.style.color = 'red'; // Example color for points
+        cellElement.style.fontWeight = 'bold';
+      }
 
       cellElement.addEventListener('mousedown', () => handleCellMouseDown(rowIdx, colIdx));
       cellElement.addEventListener('mouseenter', () => handleCellMouseEnter(rowIdx, colIdx));
@@ -65,8 +105,28 @@ function renderGrid() {
 
 // Handle cell interactions
 function handleCellMouseDown(row, col) {
-  isDrawing = true;
-  updateCell(row, col);
+  if (selectedTool === 'select') {
+    selectedPoint = points.find(p => p.x === col && p.y === row) || null;
+    if (selectedPoint) {
+      renderPropertiesSidebar();
+      propertiesSidebar.classList.remove('hidden');
+    } else {
+      propertiesSidebar.classList.add('hidden');
+    }
+  } else if (selectedTool === 'transfer' || selectedTool === 'living') {
+    const existingPointIndex = points.findIndex(p => p.x === col && p.y === row);
+    if (existingPointIndex !== -1) {
+      return;
+    }
+    const newPoint = selectedTool === 'transfer'
+      ? new TransferPoint(col, row)
+      : new LivingPoint(col, row);
+    points.push(newPoint);
+    renderGrid();
+  } else {
+    isDrawing = true;
+    updateCell(row, col);
+  }
 }
 
 function handleCellMouseEnter(row, col) {
@@ -90,8 +150,22 @@ function handleCellMouseUp() {
 
 // Download map
 function downloadMap() {
-  const text = grid.map(row => row.join('')).join('\n');
-  const blob = new Blob([text], { type: 'text/plain' });
+  let content = '[map=base]\n';
+  content += '[tiles]\n';
+  content += grid.map(row => row.join('')).join('\n');
+  content += '\n[points]\n';
+
+  points.forEach(p => {
+    content += `${p.type}:\n`;
+    content += `x=${p.x}\n`;
+    content += `y=${p.y}\n`;
+    if (p.map !== undefined) content += `map=${p.map}\n`;
+    if (p.owner !== undefined) content += `owner=${p.owner}\n`;
+    if (p.price !== undefined) content += `price=${p.price}\n`;
+    if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
+  });
+
+  const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -107,23 +181,65 @@ function uploadMap(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const content = e.target.result;
-    const lines = content.split('\n').filter(line => line.trim() !== '');
 
-    // Update grid dimensions to match file
-    currentHeight = lines.length;
-    currentWidth = lines[0] ? lines[0].length : 0;
+    // Reset grid and points
+    grid = [];
+    points = [];
 
-    // Update input fields
-    widthInput.value = currentWidth;
-    heightInput.value = currentHeight;
+    const tilesIndex = content.indexOf('[tiles]');
+    const pointsIndex = content.indexOf('[points]');
 
-    // Parse content into grid
-    grid = lines.map(line => line.split(''));
+    if (tilesIndex !== -1) {
+        const tilesSection = content.substring(
+            tilesIndex + '[tiles]'.length,
+            pointsIndex !== -1 ? pointsIndex : undefined
+        ).trim();
+        const tileLines = tilesSection.split('\n');
+        grid = tileLines.map(line => line.split(''));
 
-    // Ensure all rows have same length
-    grid = grid.map(row =>
-      Array(currentWidth).fill('').map((_, i) => row[i] || '')
-    );
+        currentHeight = grid.length;
+        currentWidth = grid[0] ? grid[0].length : 0;
+        widthInput.value = currentWidth;
+        heightInput.value = currentHeight;
+    }
+
+    if (pointsIndex !== -1) {
+        const pointsSection = content.substring(pointsIndex + '[points]'.length).trim();
+        const pointBlocks = pointsSection.split(/(?=transfer:|living:)/).filter(b => b.trim());
+
+        pointBlocks.forEach(block => {
+            const lines = block.trim().split('\n');
+            const typeLine = lines.shift();
+            const type = typeLine.replace(':', '');
+            const pointData = {};
+            lines.forEach(line => {
+                const [key, value] = line.split('=');
+                if (key && value !== undefined) {
+                    pointData[key.trim()] = value.trim();
+                }
+            });
+
+            const x = parseInt(pointData.x, 10);
+            const y = parseInt(pointData.y, 10);
+
+            if (!isNaN(x) && !isNaN(y)) {
+                let newPoint;
+                if (type === 'transfer') {
+                    newPoint = new TransferPoint(x, y);
+                    newPoint.map = pointData.map || '';
+                } else if (type === 'living') {
+                    newPoint = new LivingPoint(x, y);
+                    newPoint.map = pointData.map || '';
+                    newPoint.owner = pointData.owner || '';
+                    newPoint.price = parseInt(pointData.price, 10) || 0;
+                    newPoint.maintenance = parseInt(pointData.maintenance, 10) || 0;
+                }
+                if (newPoint) {
+                    points.push(newPoint);
+                }
+            }
+        });
+    }
 
     renderGrid();
   };
@@ -152,6 +268,62 @@ charButtons.forEach(btn => {
 
 gridContainer.addEventListener('mouseup', handleCellMouseUp);
 gridContainer.addEventListener('mouseleave', handleCellMouseUp);
+
+// Render properties sidebar
+function renderPropertiesSidebar() {
+  if (!selectedPoint) {
+    propertiesContent.innerHTML = '';
+    return;
+  }
+
+  let content = `<h4>${selectedPoint.type} Point (${selectedPoint.x}, ${selectedPoint.y})</h4>`;
+
+  if (selectedPoint.type === 'transfer' || selectedPoint.type === 'living') {
+    content += `
+      <label>Map:
+        <input type="text" id="prop-map" value="${selectedPoint.map}">
+      </label><br>`;
+  }
+  if (selectedPoint.type === 'living') {
+    content += `
+      <label>Owner:
+        <input type="text" id="prop-owner" value="${selectedPoint.owner}">
+      </label><br>
+      <label>Price:
+        <input type="number" id="prop-price" value="${selectedPoint.price}">
+      </label><br>
+      <label>Maintenance:
+        <input type="number" id="prop-maintenance" value="${selectedPoint.maintenance}">
+      </label><br>`;
+  }
+  propertiesContent.innerHTML = content;
+}
+
+// Save properties
+savePropertiesBtn.addEventListener('click', () => {
+  if (!selectedPoint) return;
+
+  if (selectedPoint.type === 'transfer' || selectedPoint.type === 'living') {
+    selectedPoint.map = document.getElementById('prop-map').value;
+  }
+  if (selectedPoint.type === 'living') {
+    selectedPoint.owner = document.getElementById('prop-owner').value;
+    selectedPoint.price = parseInt(document.getElementById('prop-price').value, 10);
+    selectedPoint.maintenance = parseInt(document.getElementById('prop-maintenance').value, 10);
+  }
+
+  propertiesSidebar.classList.add('hidden');
+  selectedPoint = null;
+  // No need to re-render grid as properties are not displayed on it
+});
+
+toolButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    toolButtons.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedTool = btn.id.replace('tool-', ''); // e.g., 'tool-select' -> 'select'
+  });
+});
 
 // Function to add a row to the top
 function addRowTop() {
