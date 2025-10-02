@@ -36,7 +36,11 @@ const addRowBottomBtn = document.getElementById('add-row-bottom');
 const addColLeftBtn = document.getElementById('add-col-left');
 const addColRightBtn = document.getElementById('add-col-right');
 
-// New UI elements
+const newMapBtn = document.getElementById('new-map');
+const mapSelect = document.getElementById('map-select');
+const mapNameInput = document.getElementById('map-name');
+
+// Tool UI elements
 const toolButtons = document.querySelectorAll('.tool-btn');
 const propertiesSidebar = document.getElementById('properties-sidebar');
 const propertiesContent = document.getElementById('properties-content');
@@ -53,31 +57,39 @@ const charColors = {
 };
 
 // State
-let grid = [];
-let points = []; // Array to store transfer/living points
+let maps = [];
+let currentMapIndex = 0;
 let selectedChar = 'Ž';
-let selectedTool = 'select'; // 'select', 'transfer', 'living', or 'draw'
+let selectedTool = 'select';
 let isDrawing = false;
 let selectedPoint = null;
-let currentWidth = 20;
-let currentHeight = 20;
 
 // Initialize
 function init() {
-  currentWidth = parseInt(widthInput.value) || 10;
-  currentHeight = parseInt(heightInput.value) || 10;
-  generateGrid();
+  createNewMap();
 }
 
-// Generate empty grid
-function generateGrid() {
-  grid = Array(currentHeight).fill().map(() => Array(currentWidth).fill(''));
-  points = []; // Reset points
-  renderGrid();
+// Create a new map
+function createNewMap(name = 'unnamed', grid, points) {
+  const newMap = {
+    name: name,
+    grid: grid || Array(10).fill().map(() => Array(10).fill('')),
+    points: points || []
+  };
+  maps.push(newMap);
+  currentMapIndex = maps.length - 1;
+  renderCurrentMap();
+  updateMapSelect();
 }
 
-// Render grid to DOM
-function renderGrid() {
+function renderCurrentMap() {
+  const map = maps[currentMapIndex];
+  if (!map) return;
+
+  const { grid, points } = map;
+  const currentHeight = grid.length;
+  const currentWidth = grid[0]?.length || 0;
+
   gridContainer.innerHTML = '';
   gridContainer.style.gridTemplateColumns = `repeat(${currentWidth}, 30px)`;
 
@@ -85,14 +97,12 @@ function renderGrid() {
     row.forEach((cell, colIdx) => {
       const cellElement = document.createElement('div');
       cellElement.className = 'cell';
-      // cellElement.textContent = cell || ''; // Hide character
       cellElement.style.backgroundColor = charColors[cell] || charColors[''];
 
-      // Draw points
       const point = points.find(p => p.x === colIdx && p.y === rowIdx);
       if (point) {
         cellElement.textContent = point.type === 'transfer' ? 'T' : 'L';
-        cellElement.style.color = 'red'; // Example color for points
+        cellElement.style.color = 'red';
         cellElement.style.fontWeight = 'bold';
       }
 
@@ -101,12 +111,40 @@ function renderGrid() {
       gridContainer.appendChild(cellElement);
     });
   });
+
+  widthInput.value = currentWidth;
+  heightInput.value = currentHeight;
+  mapNameInput.value = map.name;
+}
+
+function updateMapSelect() {
+  mapSelect.innerHTML = '';
+  maps.forEach((map, index) => {
+    const option = document.createElement('option');
+    option.value = index;
+    option.textContent = map.name;
+    if (index === currentMapIndex) {
+      option.selected = true;
+    }
+    mapSelect.appendChild(option);
+  });
+}
+
+function updateMapName() {
+  const newName = mapNameInput.value.trim();
+  if (newName && maps[currentMapIndex]) {
+    maps[currentMapIndex].name = newName;
+    updateMapSelect();
+  }
 }
 
 // Handle cell interactions
 function handleCellMouseDown(row, col) {
+  const map = maps[currentMapIndex];
+  if (!map) return;
+
   if (selectedTool === 'select') {
-    selectedPoint = points.find(p => p.x === col && p.y === row) || null;
+    selectedPoint = map.points.find(p => p.x === col && p.y === row) || null;
     if (selectedPoint) {
       renderPropertiesSidebar();
       propertiesSidebar.classList.remove('hidden');
@@ -114,15 +152,15 @@ function handleCellMouseDown(row, col) {
       propertiesSidebar.classList.add('hidden');
     }
   } else if (selectedTool === 'transfer' || selectedTool === 'living') {
-    const existingPointIndex = points.findIndex(p => p.x === col && p.y === row);
+    const existingPointIndex = map.points.findIndex(p => p.x === col && p.y === row);
     if (existingPointIndex !== -1) {
       return;
     }
     const newPoint = selectedTool === 'transfer'
       ? new TransferPoint(col, row)
       : new LivingPoint(col, row);
-    points.push(newPoint);
-    renderGrid();
+    map.points.push(newPoint);
+    renderCurrentMap();
   } else if (selectedTool === 'draw') {
     isDrawing = true;
     updateCell(row, col);
@@ -136,7 +174,11 @@ function handleCellMouseEnter(row, col) {
 }
 
 function updateCell(row, col) {
-  grid[row][col] = selectedChar;
+  const map = maps[currentMapIndex];
+  if (!map) return;
+
+  map.grid[row][col] = selectedChar;
+  const currentWidth = map.grid[0]?.length || 0;
   const cells = gridContainer.querySelectorAll('.cell');
   const index = row * currentWidth + col;
   const cellElement = cells[index];
@@ -149,19 +191,22 @@ function handleCellMouseUp() {
 
 // Download map
 function downloadMap() {
-  let content = '[map=base]\n';
-  content += '[tiles]\n';
-  content += grid.map(row => row.join('')).join('\n');
-  content += '\n[points]\n';
+  let content = '';
+  maps.forEach(map => {
+    content += `[map=${map.name}]\n`;
+    content += '[tiles]\n';
+    content += map.grid.map(row => row.join('')).join('\n');
+    content += '\n[points]\n';
 
-  points.forEach(p => {
-    content += `${p.type}:\n`;
-    content += `x=${p.x}\n`;
-    content += `y=${p.y}\n`;
-    if (p.map !== undefined) content += `map=${p.map}\n`;
-    if (p.owner !== undefined) content += `owner=${p.owner}\n`;
-    if (p.price !== undefined) content += `price=${p.price}\n`;
-    if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
+    map.points.forEach(p => {
+      content += `${p.type}:\n`;
+      content += `x=${p.x}\n`;
+      content += `y=${p.y}\n`;
+      if (p.map !== undefined) content += `map=${p.map}\n`;
+      if (p.owner !== undefined) content += `owner=${p.owner}\n`;
+      if (p.price !== undefined) content += `price=${p.price}\n`;
+      if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
+    });
   });
 
   const blob = new Blob([content], { type: 'text/plain' });
@@ -180,76 +225,93 @@ function uploadMap(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const content = e.target.result;
+    const newMaps = [];
+    const mapSections = content.split('[map=').filter(s => s.trim());
 
-    // Reset grid and points
-    grid = [];
-    points = [];
+    mapSections.forEach(section => {
+      const nameEndIndex = section.indexOf(']');
+      const name = section.substring(0, nameEndIndex);
+      const restOfSection = section.substring(nameEndIndex + 1);
 
-    const tilesIndex = content.indexOf('[tiles]');
-    const pointsIndex = content.indexOf('[points]');
+      const tilesIndex = restOfSection.indexOf('[tiles]');
+      const pointsIndex = restOfSection.indexOf('[points]');
 
-    if (tilesIndex !== -1) {
-        const tilesSection = content.substring(
-            tilesIndex + '[tiles]'.length,
-            pointsIndex !== -1 ? pointsIndex : undefined
+      let grid = [];
+      if (tilesIndex !== -1) {
+        const tilesSection = restOfSection.substring(
+          tilesIndex + '[tiles]'.length,
+          pointsIndex !== -1 ? pointsIndex : undefined
         ).trim();
-        const tileLines = tilesSection.split('\n');
-        grid = tileLines.map(line => line.split(''));
+        grid = tilesSection.split('\n').map(line => line.split(''));
+      }
 
-        currentHeight = grid.length;
-        currentWidth = grid[0] ? grid[0].length : 0;
-        widthInput.value = currentWidth;
-        heightInput.value = currentHeight;
-    }
-
-    if (pointsIndex !== -1) {
-        const pointsSection = content.substring(pointsIndex + '[points]'.length).trim();
+      let points = [];
+      if (pointsIndex !== -1) {
+        const pointsSection = restOfSection.substring(pointsIndex + '[points]'.length).trim();
         const pointBlocks = pointsSection.split(/(?=transfer:|living:)/).filter(b => b.trim());
 
         pointBlocks.forEach(block => {
-            const lines = block.trim().split('\n');
-            const typeLine = lines.shift();
-            const type = typeLine.replace(':', '');
-            const pointData = {};
-            lines.forEach(line => {
-                const [key, value] = line.split('=');
-                if (key && value !== undefined) {
-                    pointData[key.trim()] = value.trim();
-                }
-            });
+          const lines = block.trim().split('\n');
+          const typeLine = lines.shift();
+          const type = typeLine.replace(':', '');
+          const pointData = {};
+          lines.forEach(line => {
+            const [key, value] = line.split('=');
+            if (key && value !== undefined) pointData[key.trim()] = value.trim();
+          });
 
-            const x = parseInt(pointData.x, 10);
-            const y = parseInt(pointData.y, 10);
+          const x = parseInt(pointData.x, 10);
+          const y = parseInt(pointData.y, 10);
 
-            if (!isNaN(x) && !isNaN(y)) {
-                let newPoint;
-                if (type === 'transfer') {
-                    newPoint = new TransferPoint(x, y);
-                    newPoint.map = pointData.map || '';
-                } else if (type === 'living') {
-                    newPoint = new LivingPoint(x, y);
-                    newPoint.map = pointData.map || '';
-                    newPoint.owner = pointData.owner || '';
-                    newPoint.price = parseInt(pointData.price, 10) || 0;
-                    newPoint.maintenance = parseInt(pointData.maintenance, 10) || 0;
-                }
-                if (newPoint) {
-                    points.push(newPoint);
-                }
+          if (!isNaN(x) && !isNaN(y)) {
+            let newPoint;
+            if (type === 'transfer') {
+              newPoint = new TransferPoint(x, y);
+              newPoint.map = pointData.map || '';
+            } else if (type === 'living') {
+              newPoint = new LivingPoint(x, y);
+              newPoint.map = pointData.map || '';
+              newPoint.owner = pointData.owner || '';
+              newPoint.price = parseInt(pointData.price, 10) || 0;
+              newPoint.maintenance = parseInt(pointData.maintenance, 10) || 0;
             }
+            if (newPoint) points.push(newPoint);
+          }
         });
-    }
+      }
+      newMaps.push({ name, grid, points });
+    });
 
-    renderGrid();
+    if (newMaps.length > 0) {
+      maps = newMaps;
+      currentMapIndex = 0;
+      renderCurrentMap();
+      updateMapSelect();
+    }
   };
   reader.readAsText(file);
 }
 
 // Event Listeners
+newMapBtn.addEventListener('click', () => createNewMap());
+
+mapSelect.addEventListener('change', (e) => {
+  currentMapIndex = parseInt(e.target.value, 10);
+  renderCurrentMap();
+});
+
+mapNameInput.addEventListener('change', updateMapName);
+
 generateBtn.addEventListener('click', () => {
-  currentWidth = parseInt(widthInput.value) || 10;
-  currentHeight = parseInt(heightInput.value) || 10;
-  generateGrid();
+  const map = maps[currentMapIndex];
+  if (!map) return;
+
+  const width = parseInt(widthInput.value, 10);
+  const height = parseInt(heightInput.value, 10);
+
+  map.grid = Array(height).fill().map(() => Array(width).fill(''));
+  map.points = []; // Also reset points on generation
+  renderCurrentMap();
 });
 
 downloadBtn.addEventListener('click', downloadMap);
@@ -338,34 +400,36 @@ toolButtons.forEach(btn => {
 
 // Function to add a row to the top
 function addRowTop() {
-  grid.unshift(Array(currentWidth).fill(''));
-  currentHeight++;
-  heightInput.value = currentHeight;
-  renderGrid();
+  const map = maps[currentMapIndex];
+  if (!map) return;
+  const currentWidth = map.grid[0]?.length || 0;
+  map.grid.unshift(Array(currentWidth).fill(''));
+  renderCurrentMap();
 }
 
 // Function to add a row to the bottom
 function addRowBottom() {
-  grid.push(Array(currentWidth).fill(''));
-  currentHeight++;
-  heightInput.value = currentHeight;
-  renderGrid();
+  const map = maps[currentMapIndex];
+  if (!map) return;
+  const currentWidth = map.grid[0]?.length || 0;
+  map.grid.push(Array(currentWidth).fill(''));
+  renderCurrentMap();
 }
 
 // Function to add a column to the left
 function addColLeft() {
-  grid.forEach(row => row.unshift(''));
-  currentWidth++;
-  widthInput.value = currentWidth;
-  renderGrid();
+  const map = maps[currentMapIndex];
+  if (!map) return;
+  map.grid.forEach(row => row.unshift(''));
+  renderCurrentMap();
 }
 
 // Function to add a column to the right
 function addColRight() {
-  grid.forEach(row => row.push(''));
-  currentWidth++;
-  widthInput.value = currentWidth;
-  renderGrid();
+  const map = maps[currentMapIndex];
+  if (!map) return;
+  map.grid.forEach(row => row.push(''));
+  renderCurrentMap();
 }
 
 // Event Listeners for new buttons
