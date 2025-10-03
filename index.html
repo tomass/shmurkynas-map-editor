@@ -9,64 +9,68 @@
 <body>
   <h1>Šmurknyo žemėlapio redaktorius</h1>
 
-  <div class="map-controls">
-    <button id="new-map" class="icon-btn" title="Create a new map">
-      <span class="material-icons">add</span>
-    </button>
-    <select id="map-select"></select>
-    <input type="text" id="map-name" placeholder="Map name">
-  </div>
-
-  <div class="controls">
-    <label>
-      Width:
-      <input type="number" id="width" value="10" min="1">
-    </label>
-    <label>
-      Height:
-      <input type="number" id="height" value="10" min="1">
-    </label>
-
-    <button id="generate" class="icon-btn" title="Kurti žemėlapį">
-      <span class="material-icons">add_box</span>
-    </button>
-    <div class="upload-container">
-      <button id="upload" class="icon-btn" title="Įkelti žemėlapį">
-        <span class="material-icons">file_upload</span>
+  <div class="toolbar-1">
+    <span class="map-controls">
+      <button id="new-map" class="icon-btn" title="Create a new map">
+        <span class="material-icons">add</span>
       </button>
-      <input type="file" id="file-input" accept=".txt">
-    </div>
-    <button id="download" class="icon-btn" title="Atsisiųsti žemėlapį">
-      <span class="material-icons">file_download</span>
-    </button>
-    <button id="add-row-top" class="icon-btn" title="Pridėti eilutę viršuje">
-      <span class="material-icons">arrow_upward</span>
-    </button>
-    <button id="add-row-bottom" class="icon-btn" title="Pridėti eilutę apačioje">
-      <span class="material-icons">arrow_downward</span>
-    </button>
-    <button id="add-col-left" class="icon-btn" title="Pridėti stulpelį kairėje">
-      <span class="material-icons">arrow_back</span>
-    </button>
-    <button id="add-col-right" class="icon-btn" title="Pridėti stulpelį dešinėje">
-      <span class="material-icons">arrow_forward</span>
-    </button>
+      <select id="map-select"></select>
+      <input type="text" id="map-name" placeholder="Map name">
+    </span>
+
+    <span class="controls">
+      <label>
+        Width:
+        <input type="number" id="width" value="10" min="1">
+      </label>
+      <label>
+        Height:
+        <input type="number" id="height" value="10" min="1">
+      </label>
+
+      <button id="generate" class="icon-btn" title="Kurti žemėlapį">
+        <span class="material-icons">add_box</span>
+      </button>
+      <div class="upload-container">
+        <button id="upload" class="icon-btn" title="Įkelti žemėlapį">
+          <span class="material-icons">file_upload</span>
+        </button>
+        <input type="file" id="file-input" accept=".txt">
+      </div>
+      <button id="download" class="icon-btn" title="Atsisiųsti žemėlapį">
+        <span class="material-icons">file_download</span>
+      </button>
+      <button id="add-row-top" class="icon-btn" title="Pridėti eilutę viršuje">
+        <span class="material-icons">arrow_upward</span>
+      </button>
+      <button id="add-row-bottom" class="icon-btn" title="Pridėti eilutę apačioje">
+        <span class="material-icons">arrow_downward</span>
+      </button>
+      <button id="add-col-left" class="icon-btn" title="Pridėti stulpelį kairėje">
+        <span class="material-icons">arrow_back</span>
+      </button>
+      <button id="add-col-right" class="icon-btn" title="Pridėti stulpelį dešinėje">
+        <span class="material-icons">arrow_forward</span>
+      </button>
+    </span>
   </div>
 
-  <div class="char-toolbar">
-    <span>Kaladėlės: </span>
-    <button class="char-btn selected">Ž</button>
-    <button class="char-btn">G</button>
-    <button class="char-btn">M</button>
-    <button class="char-btn">P</button>
-    <button class="char-btn">V</button>
-  </div>
+  <div class="toolbar-2">
+    <span class="char-toolbar">
+      <span>Kaladėlės: </span>
+      <button class="char-btn selected">Ž</button>
+      <button class="char-btn">G</button>
+      <button class="char-btn">M</button>
+      <button class="char-btn">P</button>
+      <button class="char-btn">V</button>
+    </span>
 
-  <div class="points-toolbar">
-    <span>Points of Interest: </span>
-    <button id="tool-select" class="tool-btn selected">Select</button>
-    <button id="tool-transfer" class="tool-btn">Transfer</button>
-    <button id="tool-living" class="tool-btn">Living</button>
+    <span class="points-toolbar">
+      <span>Points of Interest: </span>
+      <button id="tool-select" class="tool-btn selected">Select</button>
+      <button id="tool-transfer" class="tool-btn">Transfer</button>
+      <button id="tool-living" class="tool-btn">Living</button>
+    </span>
   </div>
 
   <div id="grid-wrapper">

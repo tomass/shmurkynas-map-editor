@@ -1,0 +1,107 @@
+import { maps, setCurrentMapIndex, renderCurrentMap, updateMapSelect } from './main';
+import { TransferPoint, LivingPoint } from './constants';
+
+// Download map
+export function downloadMap() {
+  let content = '';
+  maps.forEach(map => {
+    content += `[map=${map.name}]\n`;
+    content += '[tiles]\n';
+    content += map.grid.map(row => row.join('')).join('\n');
+    content += '\n[points]\n';
+
+    map.points.forEach(p => {
+      content += `${p.type}:\n`;
+      content += `x=${p.x}\n`;
+      content += `y=${p.y}\n`;
+      if (p.map !== undefined) content += `map=${p.map}\n`;
+      if (p.owner !== undefined) content += `owner=${p.owner}\n`;
+      if (p.price !== undefined) content += `price=${p.price}\n`;
+      if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
+    });
+  });
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'map.txt';
+  a.click();
+}
+
+// Upload map
+export function uploadMap(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const content = e.target.result;
+    const newMaps = [];
+    const mapSections = content.split('[map=').filter(s => s.trim());
+
+    mapSections.forEach(section => {
+      const nameEndIndex = section.indexOf(']');
+      const name = section.substring(0, nameEndIndex);
+      const restOfSection = section.substring(nameEndIndex + 1);
+
+      const tilesIndex = restOfSection.indexOf('[tiles]');
+      const pointsIndex = restOfSection.indexOf('[points]');
+
+      let grid = [];
+      if (tilesIndex !== -1) {
+        const tilesSection = restOfSection.substring(
+          tilesIndex + '[tiles]'.length,
+          pointsIndex !== -1 ? pointsIndex : undefined
+        ).trim();
+        grid = tilesSection.split('\n').map(line => line.split(''));
+      }
+
+      let points = [];
+      if (pointsIndex !== -1) {
+        const pointsSection = restOfSection.substring(pointsIndex + '[points]'.length).trim();
+        const pointBlocks = pointsSection.split(/(?=transfer:|living:)/).filter(b => b.trim());
+
+        pointBlocks.forEach(block => {
+          const lines = block.trim().split('\n');
+          const typeLine = lines.shift();
+          const type = typeLine.replace(':', '');
+          const pointData = {};
+          lines.forEach(line => {
+            const [key, value] = line.split('=');
+            if (key && value !== undefined) pointData[key.trim()] = value.trim();
+          });
+
+          const x = parseInt(pointData.x, 10);
+          const y = parseInt(pointData.y, 10);
+
+          if (!isNaN(x) && !isNaN(y)) {
+            let newPoint;
+            if (type === 'transfer') {
+              newPoint = new TransferPoint(x, y);
+              newPoint.map = pointData.map || '';
+            } else if (type === 'living') {
+              newPoint = new LivingPoint(x, y);
+              newPoint.map = pointData.map || '';
+              newPoint.owner = pointData.owner || '';
+              newPoint.price = parseInt(pointData.price, 10) || 0;
+              newPoint.maintenance = parseInt(pointData.maintenance, 10) || 0;
+            }
+            if (newPoint) points.push(newPoint);
+          }
+        });
+      }
+      newMaps.push({ name, grid, points });
+    });
+
+    if (newMaps.length > 0) {
+      maps.length = 0;
+      maps.push(...newMaps);
+      //maps = newMaps;
+      setCurrentMapIndex(0);
+      renderCurrentMap();
+      updateMapSelect();
+    }
+  };
+  reader.readAsText(file);
+}

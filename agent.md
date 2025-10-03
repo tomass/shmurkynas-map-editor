@@ -29,12 +29,15 @@ Kids aged 6–12 (simple controls, bright visuals, collaborative tasks).
 ## **3. Repository Structure**
 /
 ├── /src
+│   ├── constants.js      # Project constants, types
+│   ├── file.js           # Map uploading, downloading
 │   ├── main.js           # Main Game map editor logic
 │   └── style.css         # Style file
+├── agent.md              # Information about project (this file)
 └── index.html            # Main webapp page
 
 **Key Files**:
-- `main.js`: All logic goes here while editor is still small
+- `main.js`: Main logic goes here while editor is still small
 
 ---
 

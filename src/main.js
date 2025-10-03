@@ -1,63 +1,40 @@
-// Point classes
-class TransferPoint {
-  constructor(x, y) {
-    this.type = 'transfer';
-    this.x = x;
-    this.y = y;
-    this.map = '';
-  }
-}
+import { tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
+import { downloadMap, uploadMap } from './file';
 
-class LivingPoint {
-  constructor(x, y) {
-    this.type = 'living';
-    this.x = x;
-    this.y = y;
-    this.map = '';
-    this.owner = '';
-    this.price = 0;
-    this.maintenance = 0;
-  }
-}
+// Toolbar-1
+const newMapBtn = document.getElementById('new-map');
+const mapSelect = document.getElementById('map-select');
+const mapNameInput = document.getElementById('map-name');
 
-// DOM Elements
 const widthInput = document.getElementById('width');
 const heightInput = document.getElementById('height');
-const charButtons = document.querySelectorAll('.char-btn');
-const gridContainer = document.getElementById('grid');
+
+const generateBtn = document.getElementById('generate'); // TODO: Not actually used, as map is created with new-map
+                                                         //       this actually clears the map
+
 const downloadBtn = document.getElementById('download');
-const generateBtn = document.getElementById('generate');
 const uploadBtn = document.getElementById('upload');
 const fileInput = document.getElementById('file-input');
-const gridWrapper = document.getElementById('grid-wrapper');
 
 const addRowTopBtn = document.getElementById('add-row-top');
 const addRowBottomBtn = document.getElementById('add-row-bottom');
 const addColLeftBtn = document.getElementById('add-col-left');
 const addColRightBtn = document.getElementById('add-col-right');
 
-const newMapBtn = document.getElementById('new-map');
-const mapSelect = document.getElementById('map-select');
-const mapNameInput = document.getElementById('map-name');
-
-// Tool UI elements
+// Toolbar-2
+const charButtons = document.querySelectorAll('.char-btn');
 const toolButtons = document.querySelectorAll('.tool-btn');
+
+// Properties sidebar
 const propertiesSidebar = document.getElementById('properties-sidebar');
 const propertiesContent = document.getElementById('properties-content');
 const savePropertiesBtn = document.getElementById('save-properties');
 
-// Color mapping for characters
-const charColors = {
-  'Ž': '#baf455',
-  'G': '#454a59', // Light green
-  'M': '#7aa21d', // Light blue
-  'P': '#4d2926', // Light yellow
-  'V': '#5877ddff', // Light purple
-  '': '#ffffff'    // White for empty cells
-};
+// Map area
+const gridContainer = document.getElementById('grid');
 
 // State
-let maps = [];
+export let maps = [];
 let currentMapIndex = 0;
 let selectedChar = 'Ž';
 let selectedTool = 'select';
@@ -69,11 +46,15 @@ function init() {
   createNewMap();
 }
 
+export function setCurrentMapIndex(index) {
+  currentMapIndex = index;
+}
+
 // Create a new map
 function createNewMap(name = 'unnamed', grid, points) {
   const newMap = {
     name: name,
-    grid: grid || Array(10).fill().map(() => Array(10).fill('')),
+    grid: grid || Array(10).fill(defaultTileType).map(() => Array(10).fill(defaultTileType)),
     points: points || []
   };
   maps.push(newMap);
@@ -82,7 +63,7 @@ function createNewMap(name = 'unnamed', grid, points) {
   updateMapSelect();
 }
 
-function renderCurrentMap() {
+export function renderCurrentMap() {
   const map = maps[currentMapIndex];
   if (!map) return;
 
@@ -97,7 +78,7 @@ function renderCurrentMap() {
     row.forEach((cell, colIdx) => {
       const cellElement = document.createElement('div');
       cellElement.className = 'cell';
-      cellElement.style.backgroundColor = charColors[cell] || charColors[''];
+      cellElement.style.backgroundColor = tileTypes[cell] || tileTypes[defaultTileType];
 
       const point = points.find(p => p.x === colIdx && p.y === rowIdx);
       if (point) {
@@ -117,7 +98,7 @@ function renderCurrentMap() {
   mapNameInput.value = map.name;
 }
 
-function updateMapSelect() {
+export function updateMapSelect() {
   mapSelect.innerHTML = '';
   maps.forEach((map, index) => {
     const option = document.createElement('option');
@@ -182,114 +163,11 @@ function updateCell(row, col) {
   const cells = gridContainer.querySelectorAll('.cell');
   const index = row * currentWidth + col;
   const cellElement = cells[index];
-  cellElement.style.backgroundColor = charColors[selectedChar] || charColors[''];
+  cellElement.style.backgroundColor = tileTypes[selectedChar] || tileTypes[''];
 }
 
 function handleCellMouseUp() {
   isDrawing = false;
-}
-
-// Download map
-function downloadMap() {
-  let content = '';
-  maps.forEach(map => {
-    content += `[map=${map.name}]\n`;
-    content += '[tiles]\n';
-    content += map.grid.map(row => row.join('')).join('\n');
-    content += '\n[points]\n';
-
-    map.points.forEach(p => {
-      content += `${p.type}:\n`;
-      content += `x=${p.x}\n`;
-      content += `y=${p.y}\n`;
-      if (p.map !== undefined) content += `map=${p.map}\n`;
-      if (p.owner !== undefined) content += `owner=${p.owner}\n`;
-      if (p.price !== undefined) content += `price=${p.price}\n`;
-      if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
-    });
-  });
-
-  const blob = new Blob([content], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'map.txt';
-  a.click();
-}
-
-// Upload map
-function uploadMap(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const content = e.target.result;
-    const newMaps = [];
-    const mapSections = content.split('[map=').filter(s => s.trim());
-
-    mapSections.forEach(section => {
-      const nameEndIndex = section.indexOf(']');
-      const name = section.substring(0, nameEndIndex);
-      const restOfSection = section.substring(nameEndIndex + 1);
-
-      const tilesIndex = restOfSection.indexOf('[tiles]');
-      const pointsIndex = restOfSection.indexOf('[points]');
-
-      let grid = [];
-      if (tilesIndex !== -1) {
-        const tilesSection = restOfSection.substring(
-          tilesIndex + '[tiles]'.length,
-          pointsIndex !== -1 ? pointsIndex : undefined
-        ).trim();
-        grid = tilesSection.split('\n').map(line => line.split(''));
-      }
-
-      let points = [];
-      if (pointsIndex !== -1) {
-        const pointsSection = restOfSection.substring(pointsIndex + '[points]'.length).trim();
-        const pointBlocks = pointsSection.split(/(?=transfer:|living:)/).filter(b => b.trim());
-
-        pointBlocks.forEach(block => {
-          const lines = block.trim().split('\n');
-          const typeLine = lines.shift();
-          const type = typeLine.replace(':', '');
-          const pointData = {};
-          lines.forEach(line => {
-            const [key, value] = line.split('=');
-            if (key && value !== undefined) pointData[key.trim()] = value.trim();
-          });
-
-          const x = parseInt(pointData.x, 10);
-          const y = parseInt(pointData.y, 10);
-
-          if (!isNaN(x) && !isNaN(y)) {
-            let newPoint;
-            if (type === 'transfer') {
-              newPoint = new TransferPoint(x, y);
-              newPoint.map = pointData.map || '';
-            } else if (type === 'living') {
-              newPoint = new LivingPoint(x, y);
-              newPoint.map = pointData.map || '';
-              newPoint.owner = pointData.owner || '';
-              newPoint.price = parseInt(pointData.price, 10) || 0;
-              newPoint.maintenance = parseInt(pointData.maintenance, 10) || 0;
-            }
-            if (newPoint) points.push(newPoint);
-          }
-        });
-      }
-      newMaps.push({ name, grid, points });
-    });
-
-    if (newMaps.length > 0) {
-      maps = newMaps;
-      currentMapIndex = 0;
-      renderCurrentMap();
-      updateMapSelect();
-    }
-  };
-  reader.readAsText(file);
 }
 
 // Event Listeners
