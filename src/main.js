@@ -282,6 +282,7 @@ function addRowTop() {
   if (!map) return;
   const currentWidth = map.grid[0]?.length || 0;
   map.grid.unshift(Array(currentWidth).fill(''));
+  map.points.forEach(p => p.y++);
   renderCurrentMap();
 }
 
@@ -299,6 +300,7 @@ function addColLeft() {
   const map = maps[currentMapIndex];
   if (!map) return;
   map.grid.forEach(row => row.unshift(''));
+  map.points.forEach(p => p.x++);
   renderCurrentMap();
 }
 
