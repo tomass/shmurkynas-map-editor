@@ -1,11 +1,14 @@
 import { maps, setCurrentMapIndex, renderCurrentMap, updateMapSelect } from './main';
-import { TransferPoint, LivingPoint } from './constants';
+import { TransferPoint, LivingPoint, mapTypes } from './constants';
 
 // Download map
 export function downloadMap() {
   let content = '';
   maps.forEach(map => {
     content += `[map=${map.name}]\n`;
+    if (map.type) {
+      content += `type=${map.type}\n`;
+    }
     content += '[tiles]\n';
     content += map.grid.map(row => row.join('')).join('\n');
     content += '\n[points]\n';
@@ -43,7 +46,13 @@ export function uploadMap(event) {
     mapSections.forEach(section => {
       const nameEndIndex = section.indexOf(']');
       const name = section.substring(0, nameEndIndex);
-      const restOfSection = section.substring(nameEndIndex + 1);
+      const restOfSection = section.substring(nameEndIndex + 1).trim();
+
+      let type = mapTypes[0];
+      const typeEndIndex = restOfSection.indexOf('\n');
+      if (typeEndIndex !== -1 && restOfSection.substring(0, typeEndIndex).startsWith('type=')) {
+        type = restOfSection.substring(5, typeEndIndex);
+      }
 
       const tilesIndex = restOfSection.indexOf('[tiles]');
       const pointsIndex = restOfSection.indexOf('[points]');
@@ -91,7 +100,7 @@ export function uploadMap(event) {
           }
         });
       }
-      newMaps.push({ name, grid, points });
+      newMaps.push({ name, grid, points, type });
     });
 
     if (newMaps.length > 0) {

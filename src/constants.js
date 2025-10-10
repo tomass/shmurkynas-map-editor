@@ -1,3 +1,5 @@
+export const mapTypes = ["public", "private"];
+
 // Color mapping for characters
 export const tileTypes = {
   'Ž': '#baf455',

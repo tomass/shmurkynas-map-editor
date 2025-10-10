@@ -1,10 +1,11 @@
-import { tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
+import { mapTypes, tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
 import { downloadMap, uploadMap } from './file';
 
 // Toolbar-1
 const newMapBtn = document.getElementById('new-map');
 const mapSelect = document.getElementById('map-select');
 const mapNameInput = document.getElementById('map-name');
+const mapTypeSelect = document.getElementById('map-type-select');
 
 const widthInput = document.getElementById('width');
 const heightInput = document.getElementById('height');
@@ -44,6 +45,7 @@ let selectedPoint = null;
 // Initialize
 function init() {
   createNewMap();
+  updateMapTypeSelect();
 }
 
 export function setCurrentMapIndex(index) {
@@ -51,9 +53,10 @@ export function setCurrentMapIndex(index) {
 }
 
 // Create a new map
-function createNewMap(name = 'unnamed', grid, points) {
+function createNewMap(name = 'unnamed', grid, points, type) {
   const newMap = {
     name: name,
+    type: type || mapTypes[0],
     grid: grid || Array(10).fill(defaultTileType).map(() => Array(10).fill(defaultTileType)),
     points: points || []
   };
@@ -61,6 +64,7 @@ function createNewMap(name = 'unnamed', grid, points) {
   currentMapIndex = maps.length - 1;
   renderCurrentMap();
   updateMapSelect();
+  updateMapTypeSelect();
 }
 
 export function renderCurrentMap() {
@@ -96,6 +100,24 @@ export function renderCurrentMap() {
   widthInput.value = currentWidth;
   heightInput.value = currentHeight;
   mapNameInput.value = map.name;
+  mapTypeSelect.value = map.type;
+}
+
+function updateMapTypeSelect() {
+  mapTypeSelect.innerHTML = '';
+  mapTypes.forEach(type => {
+    const option = document.createElement('option');
+    option.value = type;
+    option.textContent = type;
+    mapTypeSelect.appendChild(option);
+  });
+}
+
+function updateMapType() {
+  const newType = mapTypeSelect.value;
+  if (newType && maps[currentMapIndex]) {
+    maps[currentMapIndex].type = newType;
+  }
 }
 
 export function updateMapSelect() {
@@ -179,6 +201,7 @@ mapSelect.addEventListener('change', (e) => {
 });
 
 mapNameInput.addEventListener('change', updateMapName);
+mapTypeSelect.addEventListener('change', updateMapType);
 
 generateBtn.addEventListener('click', () => {
   const map = maps[currentMapIndex];
