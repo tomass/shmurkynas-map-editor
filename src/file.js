@@ -18,6 +18,8 @@ export function downloadMap() {
       content += `x=${p.x}\n`;
       content += `y=${p.y}\n`;
       if (p.map !== undefined) content += `map=${p.map}\n`;
+      if (p.map_x !== undefined) content += `map_x=${p.map_x}\n`;
+      if (p.map_y !== undefined) content += `map_y=${p.map_y}\n`;
       if (p.owner !== undefined) content += `owner=${p.owner}\n`;
       if (p.price !== undefined) content += `price=${p.price}\n`;
       if (p.maintenance !== undefined) content += `maintenance=${p.maintenance}\n`;
@@ -88,7 +90,9 @@ export function uploadMap(event) {
             let newPoint;
             if (type === 'transfer') {
               newPoint = new TransferPoint(x, y);
-              newPoint.map = pointData.map || '';
+              newPoint.map = pointData.map || 'base';
+              newPoint.map_x = pointData.map_x || '1';
+              newPoint.map_y = pointData.map_y || '1';
             } else if (type === 'living') {
               newPoint = new LivingPoint(x, y);
               newPoint.map = pointData.map || '';

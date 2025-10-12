@@ -250,6 +250,12 @@ function renderPropertiesSidebar() {
     content += `
       <label>Map:
         <input type="text" id="prop-map" value="${selectedPoint.map}">
+      </label><br>
+      <label>Transfer to X:
+        <input type="number" step="1" id="prop-map-x" value="${selectedPoint.map_x}">
+      </label><br>
+      <label>Transfer to Y:
+        <input type="number" step="1" id="prop-map-y" value="${selectedPoint.map_y}">
       </label><br>`;
   }
   if (selectedPoint.type === 'living') {
@@ -273,6 +279,8 @@ savePropertiesBtn.addEventListener('click', () => {
 
   if (selectedPoint.type === 'transfer' || selectedPoint.type === 'living') {
     selectedPoint.map = document.getElementById('prop-map').value;
+    selectedPoint.map_x = document.getElementById('prop-map-x').value;
+    selectedPoint.map_y = document.getElementById('prop-map-y').value;
   }
   if (selectedPoint.type === 'living') {
     selectedPoint.owner = document.getElementById('prop-owner').value;
