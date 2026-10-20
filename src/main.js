@@ -1,4 +1,4 @@
-import { mapTypes, tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
+import { mapTypes, livingTypes, tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
 import { downloadMap, uploadMap } from './file';
 
 // Toolbar-1
@@ -25,6 +25,8 @@ const addColRightBtn = document.getElementById('add-col-right');
 // Toolbar-2
 const charButtons = document.querySelectorAll('.char-btn');
 const toolButtons = document.querySelectorAll('.tool-btn');
+const livingTypeLabel = document.getElementById('living-type-label');
+const livingTypeSelect = document.getElementById('living-type-select');
 
 // Properties sidebar
 const propertiesSidebar = document.getElementById('properties-sidebar');
@@ -46,6 +48,7 @@ let selectedPoint = null;
 function init() {
   createNewMap();
   updateMapTypeSelect();
+  updateLivingTypeSelect();
 }
 
 export function setCurrentMapIndex(index) {
@@ -113,6 +116,16 @@ function updateMapTypeSelect() {
   });
 }
 
+function updateLivingTypeSelect() {
+  livingTypeSelect.innerHTML = '';
+  livingTypes.forEach(type => {
+    const option = document.createElement('option');
+    option.value = type;
+    option.textContent = type;
+    livingTypeSelect.appendChild(option);
+  });
+}
+
 function updateMapType() {
   const newType = mapTypeSelect.value;
   if (newType && maps[currentMapIndex]) {
@@ -161,7 +174,7 @@ function handleCellMouseDown(row, col) {
     }
     const newPoint = selectedTool === 'transfer'
       ? new TransferPoint(col, row)
-      : new LivingPoint(col, row);
+      : new LivingPoint(col, row, livingTypeSelect.value);
     map.points.push(newPoint);
     renderCurrentMap();
   } else if (selectedTool === 'draw') {
@@ -220,6 +233,10 @@ downloadBtn.addEventListener('click', downloadMap);
 uploadBtn.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', uploadMap);
 
+function updateLivingTypeVisibility() {
+  livingTypeLabel.classList.toggle('hidden', selectedTool !== 'living');
+}
+
 charButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     // Deselect all char buttons
@@ -231,6 +248,7 @@ charButtons.forEach(btn => {
     btn.classList.add('selected');
     selectedChar = btn.textContent;
     selectedTool = 'draw'; // Set tool to 'draw'
+    updateLivingTypeVisibility();
   });
 });
 
@@ -260,6 +278,11 @@ function renderPropertiesSidebar() {
   }
   if (selectedPoint.type === 'living') {
     content += `
+      <label>Type:
+        <select id="prop-living-type">
+          ${livingTypes.map(type => `<option value="${type}"${type === selectedPoint.livingType ? ' selected' : ''}>${type}</option>`).join('')}
+        </select>
+      </label><br>
       <label>Owner:
         <input type="text" id="prop-owner" value="${selectedPoint.owner}">
       </label><br>
@@ -283,6 +306,7 @@ savePropertiesBtn.addEventListener('click', () => {
     selectedPoint.map_y = document.getElementById('prop-map-y').value;
   }
   if (selectedPoint.type === 'living') {
+    selectedPoint.livingType = document.getElementById('prop-living-type').value;
     selectedPoint.owner = document.getElementById('prop-owner').value;
     selectedPoint.price = parseInt(document.getElementById('prop-price').value, 10);
     selectedPoint.maintenance = parseInt(document.getElementById('prop-maintenance').value, 10);
@@ -304,6 +328,7 @@ toolButtons.forEach(btn => {
     btn.classList.add('selected');
     selectedTool = btn.id.replace('tool-', ''); // 'select', 'transfer', or 'living'
     isDrawing = false; // Stop drawing when a tool is selected
+    updateLivingTypeVisibility();
   });
 });
 

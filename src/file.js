@@ -17,6 +17,7 @@ export function downloadMap() {
       content += `${p.type}:\n`;
       content += `x=${p.x}\n`;
       content += `y=${p.y}\n`;
+      if (p.livingType !== undefined) content += `type=${p.livingType}\n`;
       if (p.map !== undefined) content += `map=${p.map}\n`;
       if (p.map_x !== undefined) content += `map_x=${p.map_x}\n`;
       if (p.map_y !== undefined) content += `map_y=${p.map_y}\n`;
@@ -94,7 +95,7 @@ export function uploadMap(event) {
               newPoint.map_x = pointData.map_x || '1';
               newPoint.map_y = pointData.map_y || '1';
             } else if (type === 'living') {
-              newPoint = new LivingPoint(x, y);
+              newPoint = new LivingPoint(x, y, pointData.type);
               newPoint.map = pointData.map || '';
               newPoint.owner = pointData.owner || '';
               newPoint.price = parseInt(pointData.price, 10) || 0;

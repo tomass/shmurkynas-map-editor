@@ -64,7 +64,11 @@ Kids aged 6–12 (simple controls, bright visuals, collaborative tasks).
 - after point type all attributes are listed on a separate line, like:
 x=29
 y=10
+type=flat1
 map=butas_mazas
 owner=
 price=0
 maintenance=0
+- for living points `type=` is the type of living: flat1, flat2, house1 or house2
+  (defined in `livingTypes` in constants.js, chosen in the toolbar next to the "Living" tool
+  and editable in the point properties sidebar)

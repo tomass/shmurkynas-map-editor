@@ -1,5 +1,8 @@
 export const mapTypes = ["public", "private"];
 
+// Types of living (housing) a living point can represent
+export const livingTypes = ["flat1", "flat2", "house1", "house2"];
+
 // Color mapping for characters
 export const tileTypes = {
   'Ž': '#baf455',
@@ -21,8 +24,9 @@ export class TransferPoint {
 }
 
 export class LivingPoint {
-  constructor(x, y) {
+  constructor(x, y, livingType) {
     this.type = 'living';
+    this.livingType = livingTypes.includes(livingType) ? livingType : livingTypes[0];
     this.x = x;
     this.y = y;
     this.map = '';
