@@ -17,6 +17,10 @@
       <select id="map-select"></select>
       <input type="text" id="map-name" placeholder="Map name">
       <select id="map-type-select"></select>
+      <span class="origin-controls" title="Žemėlapio pradžia pasaulio koordinatėmis. Kairiojo apatinio laukelio pasaulio koordinatė.">
+        <label>origin_x: <input type="number" step="1" id="origin-x" value="0"></label>
+        <label>origin_y: <input type="number" step="1" id="origin-y" value="0"></label>
+      </span>
     </span>
 
     <span class="controls">
@@ -36,23 +40,42 @@
         <button id="upload" class="icon-btn" title="Įkelti žemėlapį">
           <span class="material-icons">file_upload</span>
         </button>
-        <input type="file" id="file-input" accept=".txt">
+        <input type="file" id="file-input" accept=".map,.txt">
       </div>
       <button id="download" class="icon-btn" title="Atsisiųsti žemėlapį">
         <span class="material-icons">file_download</span>
       </button>
-      <button id="add-row-top" class="icon-btn" title="Pridėti eilutę viršuje">
-        <span class="material-icons">arrow_upward</span>
-      </button>
-      <button id="add-row-bottom" class="icon-btn" title="Pridėti eilutę apačioje">
-        <span class="material-icons">arrow_downward</span>
-      </button>
-      <button id="add-col-left" class="icon-btn" title="Pridėti stulpelį kairėje">
-        <span class="material-icons">arrow_back</span>
-      </button>
-      <button id="add-col-right" class="icon-btn" title="Pridėti stulpelį dešinėje">
-        <span class="material-icons">arrow_forward</span>
-      </button>
+      <span class="resize-group">
+        <span class="resize-label">Pridėti:</span>
+        <button id="add-row-top" class="icon-btn" title="Pridėti eilutę viršuje (šiaurėje)">
+          <span class="material-icons">arrow_upward</span>
+        </button>
+        <button id="add-row-bottom" class="icon-btn" title="Pridėti eilutę apačioje (pietuose)">
+          <span class="material-icons">arrow_downward</span>
+        </button>
+        <button id="add-col-left" class="icon-btn" title="Pridėti stulpelį kairėje (vakaruose)">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <button id="add-col-right" class="icon-btn" title="Pridėti stulpelį dešinėje (rytuose)">
+          <span class="material-icons">arrow_forward</span>
+        </button>
+      </span>
+
+      <span class="resize-group">
+        <span class="resize-label">Pašalinti:</span>
+        <button id="remove-row-top" class="icon-btn danger" title="Pašalinti eilutę viršuje (šiaurėje)">
+          <span class="material-icons">arrow_upward</span>
+        </button>
+        <button id="remove-row-bottom" class="icon-btn danger" title="Pašalinti eilutę apačioje (pietuose)">
+          <span class="material-icons">arrow_downward</span>
+        </button>
+        <button id="remove-col-left" class="icon-btn danger" title="Pašalinti stulpelį kairėje (vakaruose)">
+          <span class="material-icons">arrow_back</span>
+        </button>
+        <button id="remove-col-right" class="icon-btn danger" title="Pašalinti stulpelį dešinėje (rytuose)">
+          <span class="material-icons">arrow_forward</span>
+        </button>
+      </span>
     </span>
   </div>
 
@@ -77,6 +100,11 @@
       </label>
     </span>
   </div>
+
+  <div id="origin-warning" class="message warning hidden"></div>
+  <div id="notice" class="message error hidden"></div>
+
+  <div id="coord-readout" class="coord-readout"></div>
 
   <div id="grid-wrapper">
     <div id="grid"></div>

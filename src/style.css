@@ -92,3 +92,55 @@
 .hidden {
   display: none;
 }
+
+.origin-controls {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.origin-controls input {
+  width: 60px;
+}
+
+.resize-group {
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.resize-label {
+  margin-right: 5px;
+}
+
+.icon-btn.danger {
+  color: #a33;
+  border-color: #a33;
+}
+
+.message {
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.message.warning {
+  background: #fff8e1;
+  border-color: #e0b400;
+}
+
+.message.error {
+  background: #fdecea;
+  border-color: #a33;
+}
+
+.coord-readout {
+  min-height: 1.2em;
+  margin-bottom: 5px;
+  font-family: monospace;
+  color: #555;
+}
+
+.point-coords {
+  margin: 5px 0 15px;
+  color: #555;
+}
