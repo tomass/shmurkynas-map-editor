@@ -1,4 +1,4 @@
-import { maps, setCurrentMapIndex, renderCurrentMap, updateMapSelect } from './main';
+import { maps, adoptMaps } from './main';
 import { parseMapFile, serializeMaps } from './mapFormat';
 
 // Download map
@@ -22,11 +22,7 @@ export function uploadMap(event) {
     const newMaps = parseMapFile(e.target.result);
 
     if (newMaps.length > 0) {
-      maps.length = 0;
-      maps.push(...newMaps);
-      setCurrentMapIndex(0);
-      renderCurrentMap();
-      updateMapSelect();
+      adoptMaps(newMaps);
     }
   };
   reader.readAsText(file);

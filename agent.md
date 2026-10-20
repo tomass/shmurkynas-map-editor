@@ -33,6 +33,7 @@ Kids aged 6–12 (simple controls, bright visuals, collaborative tasks).
 │   ├── file.js           # Map uploading, downloading
 │   ├── mapFormat.js      # Reading and writing the map file, world coordinates
 │   ├── resize.js         # Growing/trimming a map and the coordinate fixups
+│   ├── livingIds.js      # Minting and keeping the ids of living points
 │   ├── main.js           # Main Game map editor logic
 │   └── style.css         # Style file
 ├── agent.md              # Information about project (this file)
@@ -89,10 +90,30 @@ North and south differ because `origin_y` compensates for the height, while a
 point's `y=` is a plain file row. Trimming is the mirror image, and is refused
 outright when it would cut away a tile that carries a point.
 
-**Not yet understood by the game**: `shared/mapParser.js` and the places that
-index `map.tiles` still ignore `origin_x` / `origin_y`, so a map with a non-zero
-origin is misread there. The editor shows a warning whenever the current map has
-one.
+`shared/mapParser.js` reads both attributes and turns each point's `x=` / `y=`
+into world coordinates as it loads; `map_x=` / `map_y=` are deliberately left
+alone there, because they belong to the map a transfer point leads to. A map
+with a non-zero origin therefore has to be deployed together with a game that
+reads them, which is what the editor's banner says.
+
+### Living point ids
+A living point carries an `id=`, written directly after the `living:` line, and
+it is what ownership hangs on: the server follows the id, so an owner moves with
+the house.
+
+    <map>-<flat|house>-NN      base-flat-07, base-house-03
+
+- Two digits, lowercase; three only once a map passes 99 of a kind.
+- `<flat|house>` comes from the living type (flat1/flat2, house1/house2).
+- A new living point gets the highest number already used for that map and kind,
+  plus one, and the editor gives an id to any living point it loads without one.
+- An id is never rewritten: not when the point moves, not when a map is resized,
+  not when its living type changes, and never derived from the coordinates.
+- An id is never reused and existing points are never renumbered, so
+  `livingIds.js` keeps the highest number per map and kind for the whole session
+  - deleting the last flat on a map does not free its number. That high-water
+  mark is rebuilt from the file on every upload, which is as far back as the
+  editor can see.
 
 ### Gotchas
 - The tile matrix must stay strictly rectangular; the game's parser does not pad
@@ -100,8 +121,12 @@ one.
 - Attributes and point fields the editor does not recognise are carried through
   a round trip untouched, in the place they were found (`extraAttrs` on a map,
   `extra` on a point). A point's `fields` list is what decides which lines are
-  written, and in which order, so use `setPointField` rather than assigning to a
-  point directly.
+  written, and in which order: a field read from a file keeps the place it had
+  there, and only a field the editor adds later is put where the canonical order
+  says. Use `setPointField` rather than assigning to a point directly.
+- Loading a map file written before ids existed is the one time the editor
+  changes a file it was only asked to read: it adds the missing `id=` lines, and
+  says so. Everything else round-trips byte for byte.
 
 ### **Setup file example**
 - Setup file consists of multiple maps, all of which have such components:

@@ -12,9 +12,11 @@ import {
 const KNOWN_MAP_ATTRS = new Set(mapAttrOrder);
 
 // Field name in the file -> property on the point model. A field that is not
-// listed here is unknown to the editor and is kept verbatim in `point.extra`,
-// so that things like a stable `id=` survive a round trip.
+// listed here is unknown to the editor and is kept verbatim in `point.extra`.
+// `id` is listed, but it is read and written and never otherwise touched: see
+// livingIds.js.
 const POINT_FIELD_PROPS = {
+  id: 'id',
   x: 'x',
   y: 'y',
   type: 'livingType',
@@ -102,12 +104,23 @@ export function getPointField(point, key) {
 }
 
 export function setPointField(point, key, value) {
-  const prop = POINT_FIELD_PROPS[key];
-  if (prop) point[prop] = value;
-  else point.extra[key] = value;
+  writePointField(point, key, value);
   if (!point.fields.includes(key)) {
     insertInOrder(point.fields, key, pointFieldOrder[point.type] || []);
   }
+}
+
+// As above, but for a field being read out of a file: it keeps the place it
+// had there rather than being moved to where the editor would have put it.
+function appendPointField(point, key, value) {
+  writePointField(point, key, value);
+  if (!point.fields.includes(key)) point.fields.push(key);
+}
+
+function writePointField(point, key, value) {
+  const prop = POINT_FIELD_PROPS[key];
+  if (prop) point[prop] = value;
+  else point.extra[key] = value;
 }
 
 // Move a coordinate field by `delta`. A field the file did not have is not
@@ -182,7 +195,7 @@ export function parseMapFile(text) {
         continue;
       }
       if (point) readField(line, (key, value) => {
-        setPointField(point, key, NUMERIC_POINT_FIELDS.has(key) ? toIntOr(value, value) : value);
+        appendPointField(point, key, NUMERIC_POINT_FIELDS.has(key) ? toIntOr(value, value) : value);
       });
       continue;
     }

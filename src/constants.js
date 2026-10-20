@@ -19,7 +19,8 @@ export const defaultTileType = 'Ž';
 // creates, and to decide where a field the editor adds later belongs.
 export const pointFieldOrder = {
   transfer: ['x', 'y', 'map', 'map_x', 'map_y'],
-  living: ['x', 'y', 'type', 'map', 'owner', 'price', 'maintenance'],
+  // `id` sits directly after the `living:` line, before x=.
+  living: ['id', 'x', 'y', 'type', 'map', 'owner', 'price', 'maintenance'],
 };
 
 // Same idea for the attribute lines between [map=...] and [tiles].
@@ -48,7 +49,8 @@ export class LivingPoint {
     this.owner = '';
     this.price = 0;
     this.maintenance = 0;
-    this.fields = [...pointFieldOrder.living];
+    // No id until one is minted for it, so a point never writes out a blank one.
+    this.fields = pointFieldOrder.living.filter(key => key !== 'id');
     this.extra = {};
   }
 }

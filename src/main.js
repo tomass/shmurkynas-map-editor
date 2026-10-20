@@ -2,6 +2,7 @@ import { mapTypes, livingTypes, tileTypes, TransferPoint, LivingPoint, defaultTi
 import { downloadMap, uploadMap } from './file';
 import { createMap, tileToWorld, setPointField } from './mapFormat';
 import { applyResize, hasOrigin } from './resize';
+import { createIdRegistry, assignMissingLivingIds } from './livingIds';
 
 // Toolbar-1
 const newMapBtn = document.getElementById('new-map');
@@ -55,6 +56,8 @@ let selectedChar = 'Ž';
 let selectedTool = 'select';
 let isDrawing = false;
 let selectedPoint = null;
+// Every living id this session has seen, deleted ones included.
+let idRegistry = createIdRegistry();
 
 // Initialize
 function init() {
@@ -63,8 +66,28 @@ function init() {
   updateLivingTypeSelect();
 }
 
-export function setCurrentMapIndex(index) {
-  currentMapIndex = index;
+/**
+ * Take over a map file that has just been read. The id registry is rebuilt
+ * from it - a new file is a new world - and any living point that arrived
+ * without an id is given one, so that old map files keep working.
+ */
+export function adoptMaps(newMaps) {
+  maps.length = 0;
+  maps.push(...newMaps);
+  idRegistry = createIdRegistry(maps);
+
+  const assigned = assignMissingLivingIds(maps, idRegistry);
+
+  currentMapIndex = 0;
+  renderCurrentMap();
+  updateMapSelect();
+
+  if (assigned.length) {
+    showNotice(`Gyvenamoms vietoms be id priskirti nauji id (${assigned.length}): `
+      + `${assigned.slice(0, 4).join(', ')}${assigned.length > 4 ? '…' : ''}`, 'warning');
+  } else {
+    clearNotice();
+  }
 }
 
 // Create a new map
@@ -126,8 +149,9 @@ function describeTile(world, col, row) {
   return `pasaulio (${world.x}, ${world.y}) \u00b7 faile (${col}, ${row})`;
 }
 
-// shared/mapParser.js does not understand origin_x / origin_y yet, so a map
-// with a non-zero origin is still misread by the game.
+// A map whose tiles no longer start at 0, 0. shared/mapParser.js reads these
+// two attributes, so the map and the game have to be deployed together: an
+// older game would put every point on this map in the wrong place.
 function updateOriginWarning() {
   const map = maps[currentMapIndex];
   if (!hasOrigin(map)) {
@@ -135,20 +159,20 @@ function updateOriginWarning() {
     return;
   }
   originWarning.textContent =
-    `Dėmesio: šio žemėlapio pradžia yra origin_x=${map.originX}, origin_y=${map.originY}. `
-    + 'Žaidimas šių atributų kol kas neskaito, todėl prieš diegiant šį žemėlapį '
-    + 'reikia atnaujinti shared/mapParser.js ir visas vietas, kurios naudoja map.tiles.';
+    `Šio žemėlapio pradžia: origin_x=${map.originX}, origin_y=${map.originY}. `
+    + 'Nuo šių atributų priklauso visų šio žemėlapio taškų vieta pasaulyje, '
+    + 'todėl žemėlapį diegti kartu su juos skaitančiu žaidimu (shared/mapParser.js).';
   originWarning.classList.remove('hidden');
 }
 
-function showNotice(message) {
+function showNotice(message, kind = 'error') {
   notice.textContent = message;
-  notice.classList.remove('hidden');
+  notice.className = `message ${kind}`;
 }
 
 function clearNotice() {
   notice.textContent = '';
-  notice.classList.add('hidden');
+  notice.className = 'message hidden';
 }
 
 function updateMapTypeSelect() {
@@ -220,6 +244,9 @@ function handleCellMouseDown(row, col) {
     const newPoint = selectedTool === 'transfer'
       ? new TransferPoint(col, row)
       : new LivingPoint(col, row, livingTypeSelect.value);
+    if (newPoint.type === 'living') {
+      setPointField(newPoint, 'id', idRegistry.mint(map.name, newPoint.livingType));
+    }
     map.points.push(newPoint);
     renderCurrentMap();
   } else if (selectedTool === 'draw') {
@@ -352,6 +379,7 @@ function renderPropertiesSidebar() {
   }
   if (selectedPoint.type === 'living') {
     content += `
+      <p class="point-coords">id: <code>${selectedPoint.id || '-'}</code></p>
       <label>Type:
         <select id="prop-living-type">
           ${livingTypes.map(type => `<option value="${type}"${type === selectedPoint.livingType ? ' selected' : ''}>${type}</option>`).join('')}
