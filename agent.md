@@ -47,7 +47,9 @@ Kids aged 6–12 (simple controls, bright visuals, collaborative tasks).
 ## **4. Conventions & Gotchas**
 ### **Tile System**
 - **Grid**: Chunked tiles (each tile = 42x42 unit in Three.js).
-- **Tile Types** which are defined in main.js variable charColors:
+- **Tile Types** which are defined in `tileTypes` in constants.js (color and
+  description; the toolbar buttons and the hover descriptions are built from it).
+  Characters are case sensitive:
   | Type     | Char in setup  | Notes                  |
   |----------|----------------|------------------------|
   | Grass    | `Ž`            | Default walkable tile. |
@@ -55,6 +57,9 @@ Kids aged 6–12 (simple controls, bright visuals, collaborative tasks).
   | Tree     | `M`            |                        |
   | Building | `P`            |                        |
   | Water    | `V`            |                        |
+  | Floor    | `g`            | Grindys, inside a flat |
+  | Wall     | `S`            | Siena, inside a flat   |
+  | Tiles    | `p`            | Plytelės, inside a flat |
 
 - **Coordinates**: `(x, y)` = tile grid position; `(x, 0, z)` in Three.js space.
 

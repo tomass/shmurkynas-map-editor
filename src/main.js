@@ -1,4 +1,4 @@
-import { mapTypes, livingTypes, tileTypes, TransferPoint, LivingPoint, defaultTileType } from './constants';
+import { mapTypes, livingTypes, tileTypes, tileColor, tileDescription, TransferPoint, LivingPoint, defaultTileType } from './constants';
 import { downloadMap, uploadMap } from './file';
 import { createMap, tileToWorld, setPointField } from './mapFormat';
 import { applyResize, hasOrigin } from './resize';
@@ -33,6 +33,16 @@ const removeColLeftBtn = document.getElementById('remove-col-left');
 const removeColRightBtn = document.getElementById('remove-col-right');
 
 // Toolbar-2
+const charToolbar = document.querySelector('.char-toolbar');
+for (const [char, { color, name }] of Object.entries(tileTypes)) {
+  const btn = document.createElement('button');
+  btn.className = 'char-btn';
+  btn.textContent = char;
+  btn.title = tileDescription(char);
+  btn.style.borderBottom = `4px solid ${color}`;
+  if (char === defaultTileType) btn.classList.add('selected');
+  charToolbar.appendChild(btn);
+}
 const charButtons = document.querySelectorAll('.char-btn');
 const toolButtons = document.querySelectorAll('.tool-btn');
 const livingTypeLabel = document.getElementById('living-type-label');
@@ -115,10 +125,10 @@ export function renderCurrentMap() {
     row.forEach((cell, colIdx) => {
       const cellElement = document.createElement('div');
       cellElement.className = 'cell';
-      cellElement.style.backgroundColor = tileTypes[cell] || tileTypes[defaultTileType];
+      cellElement.style.backgroundColor = tileColor(cell);
 
       const world = tileToWorld(map, colIdx, rowIdx);
-      cellElement.title = describeTile(world, colIdx, rowIdx);
+      cellElement.title = describeTile(cell, world, colIdx, rowIdx);
 
       const point = points.find(p => p.x === colIdx && p.y === rowIdx);
       if (point) {
@@ -145,8 +155,8 @@ export function renderCurrentMap() {
 // The world coordinate is the one the server logs and the JSON state files
 // (gamePoints.json, adventures.json, livingSpaces.json, players.json) use, so
 // it goes first; the file coordinate is what the editor and the map file use.
-function describeTile(world, col, row) {
-  return `pasaulio (${world.x}, ${world.y}) \u00b7 faile (${col}, ${row})`;
+function describeTile(char, world, col, row) {
+  return `${tileDescription(char)} \u00b7 pasaulio (${world.x}, ${world.y}) \u00b7 faile (${col}, ${row})`;
 }
 
 // A map whose tiles no longer start at 0, 0. shared/mapParser.js reads these
@@ -258,7 +268,7 @@ function handleCellMouseDown(row, col) {
 function handleCellMouseEnter(row, col) {
   const map = maps[currentMapIndex];
   if (map) {
-    coordReadout.textContent = describeTile(tileToWorld(map, col, row), col, row);
+    coordReadout.textContent = describeTile(map.grid[row][col], tileToWorld(map, col, row), col, row);
   }
   if (isDrawing) {
     updateCell(row, col);
@@ -274,7 +284,9 @@ function updateCell(row, col) {
   const cells = gridContainer.querySelectorAll('.cell');
   const index = row * currentWidth + col;
   const cellElement = cells[index];
-  cellElement.style.backgroundColor = tileTypes[selectedChar] || tileTypes[''];
+  cellElement.style.backgroundColor = tileColor(selectedChar);
+  cellElement.title = describeTile(selectedChar, tileToWorld(map, col, row), col, row);
+  coordReadout.textContent = cellElement.title;
 }
 
 function handleCellMouseUp() {
